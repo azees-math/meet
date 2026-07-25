@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: {
-    default: 'LiveKit Meet | Conference app build with LiveKit open source',
+    default: 'Lets Start a Meeting',
     template: '%s',
   },
   description:

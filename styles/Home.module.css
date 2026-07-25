@@ -38,3 +38,100 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0.5rem;
 }
+
+.loginPanel {
+  display: flex;
+  width: min(100% - 2rem, 420px);
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  background: #151515;
+}
+
+.loginPanel > img {
+  max-width: 100%;
+  height: auto;
+}
+
+.loginPanel h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.loginPanel p {
+  margin: 0.75rem 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.5;
+}
+
+.googleSignInButton {
+  width: min(100%, 320px);
+  justify-content: center;
+  min-height: 44px;
+}
+
+.authNotice,
+.authError {
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.authNotice {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.authError {
+  border: 1px solid rgba(255, 99, 82, 0.45);
+  background: rgba(255, 99, 82, 0.12);
+  color: #ffb4aa;
+}
+
+.accountBar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: var(--lk-bg);
+}
+
+.accountIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.accountIdentity img {
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.accountIdentity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .accountBar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .accountBar button {
+    width: 100%;
+  }
+}

@@ -1,9 +1,53 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
+
+const GOOGLE_AUTH_STORAGE_KEY = 'meet.googleUser';
+const GOOGLE_AUTH_NONCE_STORAGE_KEY = 'meet.googleAuthNonce';
+
+type GoogleUser = {
+  name: string;
+  email: string;
+  picture?: string;
+};
+
+function decodeGoogleCredential(credential: string): GoogleUser {
+  const payload = credential.split('.')[1];
+  const normalizedPayload = payload
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(payload.length / 4) * 4, '=');
+  const decodedPayload = decodeURIComponent(
+    atob(normalizedPayload)
+      .split('')
+      .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+      .join(''),
+  );
+  const profile = JSON.parse(decodedPayload);
+
+  return {
+    name: profile.name ?? profile.email ?? 'Google user',
+    email: profile.email ?? '',
+    picture: profile.picture,
+  };
+}
+
+function createGoogleAuthUrl(clientId: string) {
+  const nonce = randomString(32);
+  window.localStorage.setItem(GOOGLE_AUTH_NONCE_STORAGE_KEY, nonce);
+
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  authUrl.searchParams.set('client_id', clientId);
+  authUrl.searchParams.set('redirect_uri', window.location.origin);
+  authUrl.searchParams.set('response_type', 'id_token');
+  authUrl.searchParams.set('scope', 'openid email profile');
+  authUrl.searchParams.set('nonce', nonce);
+  authUrl.searchParams.set('prompt', 'select_account');
+  return authUrl.toString();
+}
 
 function Tabs(props: React.PropsWithChildren<{}>) {
   const searchParams = useSearchParams();
@@ -43,18 +87,32 @@ function Tabs(props: React.PropsWithChildren<{}>) {
 
 function DemoMeetingTab(props: { label: string }) {
   const router = useRouter();
+  const [roomName, setRoomName] = useState('');
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
   const startMeeting = () => {
+    const selectedRoomName = roomName.trim() || generateRoomId();
+    const encodedRoomName = encodeURIComponent(selectedRoomName);
     if (e2ee) {
-      router.push(`/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}`);
+      router.push(`/rooms/${encodedRoomName}#${encodePassphrase(sharedPassphrase)}`);
     } else {
-      router.push(`/rooms/${generateRoomId()}`);
+      router.push(`/rooms/${encodedRoomName}`);
     }
   };
   return (
     <div className={styles.tabContent}>
-      <p style={{ margin: 0 }}>Try LiveKit Meet for free with our live demo project.</p>
+      <p style={{ margin: 0 }}>
+        Click Below to start your meeting using your private app meeting tools
+      </p>
+      <label htmlFor="roomName">Meeting room name</label>
+      <input
+        id="roomName"
+        name="roomName"
+        type="text"
+        value={roomName}
+        placeholder="team-standup"
+        onChange={(ev) => setRoomName(ev.target.value)}
+      />
       <button style={{ marginTop: '1rem' }} className="lk-button" onClick={startMeeting}>
         Start Meeting
       </button>
@@ -105,9 +163,7 @@ function CustomConnectionTab(props: { label: string }) {
   };
   return (
     <form className={styles.tabContent} onSubmit={onSubmit}>
-      <p style={{ marginTop: 0 }}>
-        Connect LiveKit Meet with a custom server using LiveKit Cloud or LiveKit Server.
-      </p>
+      <p style={{ marginTop: 0 }}>Video Conferencing Tools</p>
       <input
         id="serverUrl"
         name="serverUrl"
@@ -160,23 +216,123 @@ function CustomConnectionTab(props: { label: string }) {
   );
 }
 
-export default function Page() {
+function GoogleLoginGate(props: React.PropsWithChildren<{}>) {
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const idToken = hashParams.get('id_token');
+    if (idToken) {
+      try {
+        const user = decodeGoogleCredential(idToken);
+        window.localStorage.setItem(GOOGLE_AUTH_STORAGE_KEY, JSON.stringify(user));
+        window.localStorage.removeItem(GOOGLE_AUTH_NONCE_STORAGE_KEY);
+        setGoogleUser(user);
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch {
+        setError('Unable to read the Google account profile. Please try again.');
+      }
+      setIsReady(true);
+      return;
+    }
+
+    const authError = hashParams.get('error');
+    if (authError) {
+      setError(`Google sign-in failed: ${authError}`);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    const storedUser = window.localStorage.getItem(GOOGLE_AUTH_STORAGE_KEY);
+    if (storedUser) {
+      try {
+        setGoogleUser(JSON.parse(storedUser));
+      } catch {
+        window.localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY);
+      }
+    }
+    setIsReady(true);
+  }, []);
+
+  function signInWithGoogle() {
+    if (!googleClientId) {
+      setError('Google sign-in is not configured.');
+      return;
+    }
+
+    window.location.assign(createGoogleAuthUrl(googleClientId));
+  }
+
+  function signOut() {
+    window.localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY);
+    window.localStorage.removeItem(GOOGLE_AUTH_NONCE_STORAGE_KEY);
+    setGoogleUser(null);
+  }
+
+  if (!isReady) {
+    return (
+      <main className={styles.main} data-lk-theme="default">
+        <p>Loading</p>
+      </main>
+    );
+  }
+
+  if (!googleUser) {
+    return (
+      <>
+        <main className={styles.main} data-lk-theme="default">
+          <section className={styles.loginPanel}>
+            <img src="/images/livekit-meet-home.svg" alt="LiveKit Meet" width="320" height="40" />
+            <div>
+              <h1>Sign in to start a meeting</h1>
+              <p>Use your Google account before opening the meeting dashboard.</p>
+            </div>
+            {googleClientId ? (
+              <button
+                className={`lk-button ${styles.googleSignInButton}`}
+                onClick={signInWithGoogle}
+              >
+                Continue with Google
+              </button>
+            ) : (
+              <p className={styles.authNotice}>
+                Add <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> to <code>.env.local</code> to enable
+                Google sign-in.
+              </p>
+            )}
+            {error && <p className={styles.authError}>{error}</p>}
+          </section>
+        </main>
+        <footer data-lk-theme="default">@azeesmath</footer>
+      </>
+    );
+  }
+
   return (
     <>
+      <div className={styles.accountBar} data-lk-theme="default">
+        <div className={styles.accountIdentity}>
+          {googleUser.picture && <img src={googleUser.picture} alt="" width="32" height="32" />}
+          <span>{googleUser.email}</span>
+        </div>
+        <button className="lk-button" onClick={signOut}>
+          Sign out
+        </button>
+      </div>
+      {props.children}
+    </>
+  );
+}
+
+export default function Page() {
+  return (
+    <GoogleLoginGate>
       <main className={styles.main} data-lk-theme="default">
         <div className="header">
           <img src="/images/livekit-meet-home.svg" alt="LiveKit Meet" width="360" height="45" />
-          <h2>
-            Open source video conferencing app built on{' '}
-            <a href="https://github.com/livekit/components-js?ref=meet" rel="noopener">
-              LiveKit&nbsp;Components
-            </a>
-            ,{' '}
-            <a href="https://livekit.io/cloud?ref=meet" rel="noopener">
-              LiveKit&nbsp;Cloud
-            </a>{' '}
-            and Next.js.
-          </h2>
+          <h2>Online Meeting App</h2>
         </div>
         <Suspense fallback="Loading">
           <Tabs>
@@ -185,17 +341,7 @@ export default function Page() {
           </Tabs>
         </Suspense>
       </main>
-      <footer data-lk-theme="default">
-        Hosted on{' '}
-        <a href="https://livekit.io/cloud?ref=meet" rel="noopener">
-          LiveKit Cloud
-        </a>
-        . Source code on{' '}
-        <a href="https://github.com/livekit/meet?ref=meet" rel="noopener">
-          GitHub
-        </a>
-        .
-      </footer>
-    </>
+      <footer data-lk-theme="default">@azeesmath</footer>
+    </GoogleLoginGate>
   );
 }
