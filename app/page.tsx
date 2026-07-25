@@ -2,11 +2,23 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useState } from 'react';
-import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
+import { encodePassphrase, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
 const GOOGLE_AUTH_STORAGE_KEY = 'meet.googleUser';
 const GOOGLE_AUTH_NONCE_STORAGE_KEY = 'meet.googleAuthNonce';
+const MEETING_ROOMS = [
+  'meeting-room-01',
+  'meeting-room-02',
+  'meeting-room-03',
+  'meeting-room-04',
+  'meeting-room-05',
+  'meeting-room-06',
+  'meeting-room-07',
+  'meeting-room-08',
+  'meeting-room-09',
+  'meeting-room-10',
+];
 
 type GoogleUser = {
   name: string;
@@ -55,7 +67,7 @@ function Tabs(props: React.PropsWithChildren<{}>) {
 
   const router = useRouter();
   function onTabSelected(index: number) {
-    const tab = index === 1 ? 'custom' : 'demo';
+    const tab = index === 1 ? 'custom' : 'Start a Meeting';
     router.push(`/?tab=${tab}`);
   }
 
@@ -87,12 +99,11 @@ function Tabs(props: React.PropsWithChildren<{}>) {
 
 function DemoMeetingTab(props: { label: string }) {
   const router = useRouter();
-  const [roomName, setRoomName] = useState('');
+  const [roomName, setRoomName] = useState(MEETING_ROOMS[0]);
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
   const startMeeting = () => {
-    const selectedRoomName = roomName.trim() || generateRoomId();
-    const encodedRoomName = encodeURIComponent(selectedRoomName);
+    const encodedRoomName = encodeURIComponent(roomName);
     if (e2ee) {
       router.push(`/rooms/${encodedRoomName}#${encodePassphrase(sharedPassphrase)}`);
     } else {
@@ -101,19 +112,26 @@ function DemoMeetingTab(props: { label: string }) {
   };
   return (
     <div className={styles.tabContent}>
-      <p style={{ margin: 0 }}>
-        Click Below to start your meeting using your private app meeting tools
-      </p>
-      <label htmlFor="roomName">Meeting room name</label>
-      <input
-        id="roomName"
-        name="roomName"
-        type="text"
-        value={roomName}
-        placeholder="team-standup"
-        onChange={(ev) => setRoomName(ev.target.value)}
-      />
-      <button style={{ marginTop: '1rem' }} className="lk-button" onClick={startMeeting}>
+      <div className={styles.roomField}>
+        <div className={styles.roomFieldHeader}>
+          <label htmlFor="roomName">Meeting room</label>
+          <span>10 rooms available</span>
+        </div>
+        <select
+          id="roomName"
+          name="roomName"
+          value={roomName}
+          onChange={(ev) => setRoomName(ev.target.value)}
+        >
+          {MEETING_ROOMS.map((room, index) => (
+            <option key={room} value={room}>
+              Room {index + 1}: {room}
+            </option>
+          ))}
+        </select>
+        <p>Select one of the available rooms so others can join the same meeting.</p>
+      </div>
+      <button className={`lk-button ${styles.startMeetingButton}`} onClick={startMeeting}>
         Start Meeting
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -336,7 +354,7 @@ export default function Page() {
         </div>
         <Suspense fallback="Loading">
           <Tabs>
-            <DemoMeetingTab label="Demo" />
+            <DemoMeetingTab label="Start a Meeting" />
             <CustomConnectionTab label="Custom" />
           </Tabs>
         </Suspense>

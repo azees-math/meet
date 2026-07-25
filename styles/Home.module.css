@@ -39,6 +39,82 @@
   border-radius: 0.5rem;
 }
 
+.roomField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.roomFieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.roomFieldHeader label {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.roomFieldHeader span {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.8125rem;
+}
+
+.roomField select {
+  appearance: none;
+  width: 100%;
+  min-height: 46px;
+  padding: 0.75rem 0.875rem;
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%) right 1.1rem top
+      1.25rem / 0.45rem 0.45rem no-repeat,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%) right 0.8rem top
+      1.25rem / 0.45rem 0.45rem no-repeat,
+    rgba(255, 255, 255, 0.06);
+  font: inherit;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.roomField select:focus {
+  border-color: #ff6352;
+  background:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%) right 1.1rem top
+      1.25rem / 0.45rem 0.45rem no-repeat,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%) right 0.8rem top
+      1.25rem / 0.45rem 0.45rem no-repeat,
+    rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 99, 82, 0.18);
+}
+
+.roomField option {
+  color: #111;
+}
+
+.roomField p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.startMeetingButton {
+  width: 100%;
+  justify-content: center;
+  min-height: 46px;
+  margin: 0.25rem 0 0.5rem;
+}
+
 .loginPanel {
   display: flex;
   width: min(100% - 2rem, 420px);
