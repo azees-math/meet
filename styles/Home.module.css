@@ -39,6 +39,32 @@
   border-radius: 0.5rem;
 }
 
+.tabContent input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.tabContent input:focus {
+  border-color: #ff6352;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 99, 82, 0.18);
+}
+
+.tabContent input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
 .roomField {
   display: flex;
   flex-direction: column;
@@ -128,6 +154,15 @@
   background: #151515;
 }
 
+.guestLayout {
+  display: grid;
+  width: 100%;
+  max-width: 960px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
 .loginPanel > img {
   max-width: 100%;
   height: auto;
@@ -145,10 +180,69 @@
   line-height: 1.5;
 }
 
-.googleSignInButton {
+.primaryAuthButton {
   width: min(100%, 320px);
   justify-content: center;
   min-height: 44px;
+}
+
+.secondaryActionButton {
+  width: min(100%, 320px);
+  justify-content: center;
+  min-height: 44px;
+}
+
+.authDivider {
+  display: flex;
+  width: min(100%, 320px);
+  align-items: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.875rem;
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.authDivider span {
+  padding: 0 0.75rem;
+}
+
+.loginForm {
+  display: flex;
+  width: min(100%, 320px);
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loginForm input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.loginForm input:focus {
+  border-color: #ff6352;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 99, 82, 0.18);
+}
+
+.loginForm input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .authNotice,
@@ -181,12 +275,22 @@
   background-color: var(--lk-bg);
 }
 
+.accountNotice {
+  padding: 1rem 2rem 0;
+}
+
 .accountIdentity {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 0.75rem;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.accountActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .accountIdentity img {
@@ -200,7 +304,234 @@
   white-space: nowrap;
 }
 
+.userTypeBadge {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.75rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.adminPage {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.adminHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.adminHeader h1,
+.adminPanelHeader h2 {
+  margin: 0;
+}
+
+.adminHeader p,
+.adminPanelHeader p,
+.adminEmpty {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.adminLayout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.adminSidebar {
+  display: flex;
+  min-height: calc(100vh - 4rem);
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.adminSidebarBrand h1 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.adminSidebarBrand p {
+  margin: 0.35rem 0 0;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.adminNav {
+  display: grid;
+  gap: 1rem;
+}
+
+.adminNavSection {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.adminNavLabel {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.adminNavItemActive {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+
+.adminNavItem {
+  padding: 0.75rem 0.875rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.adminBackButton {
+  width: 100%;
+  justify-content: center;
+}
+
+.adminContent {
+  display: grid;
+  gap: 1rem;
+}
+
+.adminPanels {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.adminPanelFull {
+  grid-column: 1 / -1;
+}
+
+.adminPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.adminPanel input,
+.adminPanel select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  outline: none;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.userTable {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.userTableHeader,
+.userTableRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) minmax(80px, 0.6fr) minmax(160px, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.userTableHeader {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.8125rem;
+}
+
+.userTableRow {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.userTableHeaderWide,
+.userTableRowWide {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(100px, 120px) minmax(160px, 1fr) minmax(220px, 1.2fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.userTableHeaderWide,
+.userTableHeaderOnline,
+.userTableHeaderLogs {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.8125rem;
+}
+
+.userTableRowWide,
+.userTableRowOnline,
+.userTableRowLogs {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.userTableRowWide select {
+  min-height: 38px;
+}
+
+.userTableHeaderOnline,
+.userTableRowOnline {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(80px, 100px) minmax(80px, 100px) minmax(160px, 1fr) minmax(160px, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.userTableHeaderLogs,
+.userTableRowLogs {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(110px, 0.8fr) minmax(80px, 90px) minmax(80px, 100px) minmax(220px, 1.4fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.sessionIdCell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
+  .guestLayout {
+    grid-template-columns: 1fr;
+  }
+
   .accountBar {
     align-items: stretch;
     flex-direction: column;
@@ -209,5 +540,37 @@
 
   .accountBar button {
     width: 100%;
+  }
+
+  .accountActions {
+    flex-direction: column;
+  }
+
+  .accountActions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .adminPage {
+    padding: 1rem;
+  }
+
+  .adminLayout,
+  .adminPanels {
+    grid-template-columns: 1fr;
+  }
+
+  .adminSidebar {
+    min-height: auto;
+  }
+
+  .userTableHeaderWide,
+  .userTableRowWide,
+  .userTableHeaderOnline,
+  .userTableRowOnline,
+  .userTableHeaderLogs,
+  .userTableRowLogs {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,5 +1,13 @@
 import { randomString } from '@/lib/client-utils';
 import { getLiveKitURL } from '@/lib/getLiveKitURL';
+import {
+  ensureSampleMeetingRooms,
+  getMeetingRoom,
+  insertMeetingRoomAccessLog,
+  verifyMeetingRoomAccessToken,
+} from '@/lib/meeting-rooms';
+import { getActiveUserSession } from '@/lib/user-session';
+import clientPromise from '@/lib/mongodb';
 import { ConnectionDetails } from '@/lib/types';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,11 +20,15 @@ const COOKIE_KEY = 'random-participant-postfix';
 
 export async function GET(request: NextRequest) {
   try {
+    await clientPromise;
+    await ensureSampleMeetingRooms();
+
     // Parse query parameters
     const roomName = request.nextUrl.searchParams.get('roomName');
     const participantName = request.nextUrl.searchParams.get('participantName');
     const metadata = request.nextUrl.searchParams.get('metadata') ?? '';
     const region = request.nextUrl.searchParams.get('region');
+    const roomAccessToken = request.nextUrl.searchParams.get('accessToken');
     if (!LIVEKIT_URL) {
       throw new Error('LIVEKIT_URL is not defined');
     }
@@ -32,6 +44,35 @@ export async function GET(request: NextRequest) {
     if (participantName === null) {
       return new NextResponse('Missing required query parameter: participantName', { status: 400 });
     }
+
+    const room = await getMeetingRoom(roomName);
+    if (!room) {
+      return new NextResponse('Meeting room not found', { status: 404 });
+    }
+
+    const sessionId = request.headers.get('x-session-id');
+    const activeSession = sessionId ? await getActiveUserSession(sessionId) : null;
+    const accessType = activeSession ? 'authenticated' : 'guest';
+    const requiresPasswordAccess = room.meetType === 'private';
+
+    if (requiresPasswordAccess || !activeSession) {
+      if (!roomAccessToken) {
+        return new NextResponse('Meeting room access is required', { status: 403 });
+      }
+
+      const hasAccess = await verifyMeetingRoomAccessToken(room.roomName, roomAccessToken);
+      if (!hasAccess) {
+        return new NextResponse('Invalid or expired meeting room access', { status: 403 });
+      }
+    }
+
+    await insertMeetingRoomAccessLog({
+      roomName: room.roomName,
+      participantName,
+      accessType,
+      username: activeSession?.username ?? null,
+      userType: activeSession?.userType ?? null,
+    });
 
     // Generate participant token
     if (!randomParticipantPostfix) {

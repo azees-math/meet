@@ -6,6 +6,7 @@ import { DebugMode } from '@/lib/Debug';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { SettingsMenu } from '@/lib/SettingsMenu';
+import { AUTH_SESSION_STORAGE_KEY } from '@/lib/auth-session';
 import { ConnectionDetails } from '@/lib/types';
 import {
   formatChatMessageLinks,
@@ -40,6 +41,7 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
   singlePeerConnection: boolean;
+  roomAccessToken?: string;
 }) {
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
@@ -60,13 +62,33 @@ export function PageClientImpl(props: {
     const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
     url.searchParams.append('roomName', props.roomName);
     url.searchParams.append('participantName', values.username);
+    if (props.roomAccessToken) {
+      url.searchParams.append('accessToken', props.roomAccessToken);
+    }
     if (props.region) {
       url.searchParams.append('region', props.region);
     }
-    const connectionDetailsResp = await fetch(url.toString());
+    const headers: Record<string, string> = {};
+    const rawSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+    if (rawSession) {
+      try {
+        const session = JSON.parse(rawSession) as { sessionId?: string };
+        if (session.sessionId) {
+          headers['x-session-id'] = session.sessionId;
+        }
+      } catch {
+        window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      }
+    }
+    const connectionDetailsResp = await fetch(url.toString(), {
+      headers,
+    });
+    if (!connectionDetailsResp.ok) {
+      throw new Error(await connectionDetailsResp.text());
+    }
     const connectionDetailsData = await connectionDetailsResp.json();
     setConnectionDetails(connectionDetailsData);
-  }, []);
+  }, [props.roomAccessToken, props.roomName, props.region]);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
 
   return (
