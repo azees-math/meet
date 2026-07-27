@@ -37,6 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       username,
       userType: result.userType,
+      first_name: result.first_name,
+      last_name: result.last_name,
+      email: result.email,
+      phoneno: result.phoneno,
       status: result.status,
     });
   } catch (error) {

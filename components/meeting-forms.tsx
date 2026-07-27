@@ -105,8 +105,9 @@ export function DemoMeetingPanel(props: { roomNames: string[] }) {
         Start Meeting
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+        <div className={styles.inlineCheckboxRow}>
           <input
+            className={styles.inlineCheckbox}
             id="use-e2ee"
             type="checkbox"
             checked={e2ee}

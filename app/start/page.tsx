@@ -287,13 +287,18 @@ export default function StartPage() {
     return null;
   }
 
+  const displayName =
+    [authUser.first_name, authUser.last_name].filter(Boolean).join(' ').trim() || authUser.username;
+
   return (
     <>
       <div className={styles.accountBar} data-lk-theme="default">
         <div className={styles.accountIdentity}>
           {authUser.picture ? <img src={authUser.picture} alt="" width="32" height="32" /> : null}
-          <span>{authUser.username}</span>
-          <span className={styles.userTypeBadge}>{authUser.userType}</span>
+          <div className={styles.accountIdentityText}>
+            <span>{displayName}</span>
+            <span className={styles.accountSubtle}>{authUser.username}</span>
+          </div>
         </div>
         <div className={styles.accountActions}>
           {authUser.userType === 'admin' ? (
@@ -301,6 +306,9 @@ export default function StartPage() {
               Admin
             </Link>
           ) : null}
+          <Link href="/profile" className="lk-button">
+            Profile
+          </Link>
           <button className="lk-button" onClick={signOut}>
             Sign out
           </button>

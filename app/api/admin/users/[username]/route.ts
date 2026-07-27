@@ -1,10 +1,14 @@
 import { requireAdminSession } from '@/lib/admin-session';
-import { deleteMeetUser, normalizeUsername, updateMeetUser } from '@/lib/meet-users';
+import { deleteMeetUser, normalizeUsername, updateMeetUser, validateMeetUserProfile } from '@/lib/meet-users';
 import { NextRequest, NextResponse } from 'next/server';
 
 type UpdateUserPayload = {
   userType?: 'admin' | 'user';
   password?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
 };
 
 export async function PATCH(
@@ -19,7 +23,14 @@ export async function PATCH(
 
     const { username } = await params;
     const body = (await request.json()) as UpdateUserPayload;
-    const payload: { userType?: 'admin' | 'user'; password?: string } = {};
+    const payload: {
+      userType?: 'admin' | 'user';
+      password?: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      phoneno?: string;
+    } = {};
 
     if (body.userType) {
       if (body.userType !== 'admin' && body.userType !== 'user') {
@@ -32,7 +43,35 @@ export async function PATCH(
       payload.password = body.password.trim();
     }
 
-    if (!payload.userType && !payload.password) {
+    if (body.first_name !== undefined) {
+      payload.first_name = body.first_name;
+    }
+
+    if (body.last_name !== undefined) {
+      payload.last_name = body.last_name;
+    }
+
+    if (body.email !== undefined) {
+      payload.email = body.email;
+    }
+
+    if (body.phoneno !== undefined) {
+      payload.phoneno = body.phoneno;
+    }
+
+    const profileError = validateMeetUserProfile(payload);
+    if (profileError) {
+      return NextResponse.json({ error: profileError }, { status: 400 });
+    }
+
+    if (
+      !payload.userType &&
+      !payload.password &&
+      payload.first_name === undefined &&
+      payload.last_name === undefined &&
+      payload.email === undefined &&
+      payload.phoneno === undefined
+    ) {
       return NextResponse.json({ error: 'No changes submitted.' }, { status: 400 });
     }
 

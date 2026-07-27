@@ -16,6 +16,10 @@ import {
 type AdminUser = {
   username: string;
   userType: "admin" | "user";
+  first_name: string;
+  last_name: string;
+  email: string;
+  phoneno: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -173,6 +177,8 @@ export default function AdminPage() {
   const [onlineUsersTotal, setOnlineUsersTotal] = React.useState(0);
   const [activityLogsTotal, setActivityLogsTotal] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = React.useState<AdminUser | null>(null);
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = React.useState(false);
   const [isReady, setIsReady] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = React.useState(true);
@@ -217,6 +223,9 @@ export default function AdminPage() {
         throw new Error(result.error ?? "Unable to load users.");
       }
       setUsers(result.users);
+      setSelectedUserProfile((current) =>
+        current ? result.users.find((user) => user.username === current.username) ?? current : result.users[0] ?? null,
+      );
       setUsersPage(result.page);
       setUsersTotalPages(result.totalPages);
       setUsersTotal(result.total);
@@ -394,6 +403,10 @@ export default function AdminPage() {
       username: String(formData.get("username") ?? ""),
       password: String(formData.get("password") ?? ""),
       userType: String(formData.get("userType") ?? "user"),
+      first_name: String(formData.get("first_name") ?? ""),
+      last_name: String(formData.get("last_name") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      phoneno: String(formData.get("phoneno") ?? ""),
     };
 
     try {
@@ -441,6 +454,45 @@ export default function AdminPage() {
       await loadUsers(authSession.sessionId, usersPage);
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : "Unable to update user type.");
+    }
+  }
+
+  async function handleUpdateUserProfile(event: React.FormEvent<HTMLFormElement>) {
+    if (!authSession) {
+      setError("Admin session is missing.");
+      return;
+    }
+
+    if (!selectedUserProfile) {
+      setError("Select a user first.");
+      return;
+    }
+
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const first_name = String(formData.get("first_name") ?? "");
+    const last_name = String(formData.get("last_name") ?? "");
+    const email = String(formData.get("email") ?? "");
+    const phoneno = String(formData.get("phoneno") ?? "");
+
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(selectedUserProfile.username)}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": authSession.sessionId,
+        },
+        body: JSON.stringify({ first_name, last_name, email, phoneno }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(result.error ?? "Unable to update user profile.");
+      }
+      await loadUsers(authSession.sessionId, usersPage);
+      setIsUserProfileModalOpen(false);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Unable to update user profile.");
     }
   }
 
@@ -851,6 +903,30 @@ export default function AdminPage() {
                     required
                     className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
                   />
+                  <input
+                    name="first_name"
+                    type="text"
+                    placeholder="First name"
+                    className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                  />
+                  <input
+                    name="last_name"
+                    type="text"
+                    placeholder="Last name"
+                    className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                  />
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                  />
+                  <input
+                    name="phoneno"
+                    type="text"
+                    placeholder="Phone number"
+                    className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                  />
                   <select
                     name="userType"
                     defaultValue="user"
@@ -876,8 +952,9 @@ export default function AdminPage() {
                   <p className="text-sm text-zinc-400">No users found.</p>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-[minmax(120px,1fr)_120px_minmax(160px,1fr)_220px] gap-3 border-b border-white/10 pb-2 text-xs uppercase tracking-wide text-zinc-500">
+                    <div className="grid grid-cols-[minmax(120px,1fr)_minmax(220px,1.2fr)_120px_minmax(160px,1fr)_260px] gap-3 border-b border-white/10 pb-2 text-xs uppercase tracking-wide text-zinc-500">
                       <span>Username</span>
+                      <span>Profile</span>
                       <span>Type</span>
                       <span>Updated</span>
                       <span>Actions</span>
@@ -885,9 +962,16 @@ export default function AdminPage() {
                     {users.map((user) => (
                       <div
                         key={user.username}
-                        className="grid grid-cols-[minmax(120px,1fr)_120px_minmax(160px,1fr)_220px] items-center gap-3 border-b border-white/8 py-3"
+                        className="grid grid-cols-[minmax(120px,1fr)_minmax(220px,1.2fr)_120px_minmax(160px,1fr)_260px] items-center gap-3 border-b border-white/8 py-3"
                       >
                         <span className="text-sm text-white">{user.username}</span>
+                        <div className="min-w-0 text-sm text-zinc-300">
+                          <div className="truncate text-white">
+                            {[user.first_name, user.last_name].filter(Boolean).join(" ") || "-"}
+                          </div>
+                          <div className="truncate text-zinc-400">{user.email || "-"}</div>
+                          <div className="truncate text-zinc-500">{user.phoneno || "-"}</div>
+                        </div>
                         <select
                           value={user.userType}
                           onChange={(event) =>
@@ -905,6 +989,17 @@ export default function AdminPage() {
                           {new Date(user.updatedAt).toLocaleString()}
                         </span>
                         <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUserProfile(user);
+                              setIsUserProfileModalOpen(true);
+                            }}
+                          >
+                            Edit Profile
+                          </Button>
                           <Button
                             type="button"
                             variant="outline"
@@ -1281,6 +1376,74 @@ export default function AdminPage() {
             </section>
           ) : null}
         </div>
+        {isUserProfileModalOpen && selectedUserProfile ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <form
+              onSubmit={handleUpdateUserProfile}
+              className="w-full max-w-md rounded-xl border border-white/10 bg-zinc-950 p-5 shadow-2xl"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-white">Edit User Profile</h2>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Editing {selectedUserProfile.username}.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUserProfileModalOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={selectedUserProfile.username}
+                  disabled
+                  className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-zinc-400 outline-none ring-0"
+                />
+                <input
+                  name="first_name"
+                  type="text"
+                  defaultValue={selectedUserProfile.first_name}
+                  key={`first_name:${selectedUserProfile.username}:${selectedUserProfile.updatedAt}`}
+                  placeholder="First name"
+                  className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                />
+                <input
+                  name="last_name"
+                  type="text"
+                  defaultValue={selectedUserProfile.last_name}
+                  key={`last_name:${selectedUserProfile.username}:${selectedUserProfile.updatedAt}`}
+                  placeholder="Last name"
+                  className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                />
+                <input
+                  name="email"
+                  type="email"
+                  defaultValue={selectedUserProfile.email}
+                  key={`email:${selectedUserProfile.username}:${selectedUserProfile.updatedAt}`}
+                  placeholder="Email"
+                  className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                />
+                <input
+                  name="phoneno"
+                  type="text"
+                  defaultValue={selectedUserProfile.phoneno}
+                  key={`phoneno:${selectedUserProfile.username}:${selectedUserProfile.updatedAt}`}
+                  placeholder="Phone number"
+                  className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
+                />
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  Save Profile
+                </Button>
+              </div>
+            </form>
+          </div>
+        ) : null}
       </SidebarInset>
     </SidebarProvider>
   );

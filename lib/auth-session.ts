@@ -9,6 +9,10 @@ export type AuthMethod = 'google' | 'password';
 export type AuthUser = {
   username: string;
   userType: UserType;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
   picture?: string;
   authMethod: AuthMethod;
 };

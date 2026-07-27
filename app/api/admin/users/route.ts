@@ -1,11 +1,15 @@
 import { requireAdminSession } from '@/lib/admin-session';
-import { createMeetUser, listMeetUsersPage, normalizeUsername } from '@/lib/meet-users';
+import { createMeetUser, listMeetUsersPage, normalizeUsername, validateMeetUserProfile } from '@/lib/meet-users';
 import { NextRequest, NextResponse } from 'next/server';
 
 type CreateUserPayload = {
   username?: string;
   password?: string;
   userType?: 'admin' | 'user';
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
 };
 
 export async function GET(request: NextRequest) {
@@ -39,6 +43,10 @@ export async function POST(request: NextRequest) {
     const username = normalizeUsername(body.username ?? '');
     const password = body.password?.trim() ?? '';
     const userType = body.userType;
+    const first_name = body.first_name?.trim() ?? '';
+    const last_name = body.last_name?.trim() ?? '';
+    const email = body.email?.trim() ?? '';
+    const phoneno = body.phoneno?.trim() ?? '';
 
     if (!username) {
       return NextResponse.json({ error: 'Username is required.' }, { status: 400 });
@@ -49,11 +57,19 @@ export async function POST(request: NextRequest) {
     if (userType !== 'admin' && userType !== 'user') {
       return NextResponse.json({ error: 'User type is required.' }, { status: 400 });
     }
+    const profileError = validateMeetUserProfile({ first_name, last_name, email, phoneno });
+    if (profileError) {
+      return NextResponse.json({ error: profileError }, { status: 400 });
+    }
 
     const user = await createMeetUser({
       username,
       password,
       userType,
+      first_name,
+      last_name,
+      email,
+      phoneno,
     });
 
     return NextResponse.json({ user }, { status: 201 });

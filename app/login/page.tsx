@@ -57,6 +57,10 @@ export default function LoginPage() {
       const user: AuthUser = {
         username: result.username as string,
         userType: result.userType as 'admin' | 'user',
+        first_name: result.first_name as string,
+        last_name: result.last_name as string,
+        email: result.email as string,
+        phoneno: result.phoneno as string,
         authMethod: 'password',
       };
       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));

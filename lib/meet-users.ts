@@ -4,9 +4,33 @@ import { getMongoDb } from '@/lib/mongodb';
 const COLLECTION_NAME = 'meetusers';
 const KEY_LENGTH = 64;
 const SAMPLE_MEET_USERS = [
-  { username: 'admin', password: 'admin123', userType: 'admin' },
-  { username: 'demo', password: 'demo123', userType: 'user' },
-  { username: 'host', password: 'host123', userType: 'user' },
+  {
+    username: 'admin',
+    password: 'admin123',
+    userType: 'admin',
+    first_name: 'Admin',
+    last_name: 'User',
+    email: 'admin@example.com',
+    phoneno: '081111111111',
+  },
+  {
+    username: 'demo',
+    password: 'demo123',
+    userType: 'user',
+    first_name: 'Demo',
+    last_name: 'User',
+    email: 'demo@example.com',
+    phoneno: '082222222222',
+  },
+  {
+    username: 'host',
+    password: 'host123',
+    userType: 'user',
+    first_name: 'Host',
+    last_name: 'User',
+    email: 'host@example.com',
+    phoneno: '083333333333',
+  },
 ] as const;
 
 export type MeetUserType = 'admin' | 'user';
@@ -15,9 +39,38 @@ export type MeetUserDocument = {
   username: string;
   passwordHash: string;
   userType: MeetUserType;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phoneno: string;
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type MeetUserProfile = {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
+};
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^[0-9+\-() ]{8,20}$/;
+
+export function validateMeetUserProfile(profile: MeetUserProfile) {
+  const email = profile.email?.trim() ?? '';
+  const phoneno = profile.phoneno?.trim() ?? '';
+
+  if (email && !EMAIL_PATTERN.test(email)) {
+    return 'Invalid email format.';
+  }
+
+  if (phoneno && !PHONE_PATTERN.test(phoneno)) {
+    return 'Invalid phone number format.';
+  }
+
+  return null;
+}
 
 function hashPassword(password: string, salt = randomBytes(16).toString('hex')) {
   const derivedKey = scryptSync(password, salt, KEY_LENGTH).toString('hex');
@@ -47,12 +100,16 @@ export async function ensureSampleMeetUsers() {
   const now = new Date();
 
   await Promise.all(
-    SAMPLE_MEET_USERS.map(({ username, password, userType }) =>
+    SAMPLE_MEET_USERS.map(({ username, password, userType, first_name, last_name, email, phoneno }) =>
       collection.updateOne(
         { username },
         {
           $set: {
             userType,
+            first_name,
+            last_name,
+            email,
+            phoneno,
             updatedAt: now,
           },
           $setOnInsert: {
@@ -80,13 +137,60 @@ export async function verifyMeetUser(username: string, password: string) {
   }
 
   await collection.updateOne({ username }, { $set: { updatedAt: new Date() } });
-  return { status: 'authenticated' as const, userType: existingUser.userType ?? 'user' };
+  return {
+    status: 'authenticated' as const,
+    userType: existingUser.userType ?? 'user',
+    first_name: existingUser.first_name ?? '',
+    last_name: existingUser.last_name ?? '',
+    email: existingUser.email ?? '',
+    phoneno: existingUser.phoneno ?? '',
+  };
+}
+
+export async function getMeetUser(username: string) {
+  const collection = await getMeetUsersCollection();
+  const normalizedUsername = normalizeUsername(username);
+  const user = await collection.findOne(
+    { username: normalizedUsername },
+    {
+      projection: {
+        _id: 0,
+        username: 1,
+        userType: 1,
+        first_name: 1,
+        last_name: 1,
+        email: 1,
+        phoneno: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  );
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    username: user.username,
+    userType: user.userType,
+    first_name: user.first_name ?? '',
+    last_name: user.last_name ?? '',
+    email: user.email ?? '',
+    phoneno: user.phoneno ?? '',
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+  };
 }
 
 export async function createMeetUser(params: {
   username: string;
   password: string;
   userType: MeetUserType;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
 }) {
   const collection = await getMeetUsersCollection();
   const now = new Date();
@@ -96,6 +200,10 @@ export async function createMeetUser(params: {
     username,
     passwordHash: hashPassword(params.password),
     userType: params.userType,
+    first_name: params.first_name?.trim() ?? '',
+    last_name: params.last_name?.trim() ?? '',
+    email: params.email?.trim() ?? '',
+    phoneno: params.phoneno?.trim() ?? '',
     createdAt: now,
     updatedAt: now,
   });
@@ -103,7 +211,12 @@ export async function createMeetUser(params: {
   return {
     username,
     userType: params.userType,
+    first_name: params.first_name?.trim() ?? '',
+    last_name: params.last_name?.trim() ?? '',
+    email: params.email?.trim() ?? '',
+    phoneno: params.phoneno?.trim() ?? '',
     createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
   };
 }
 
@@ -127,10 +240,14 @@ export async function listMeetUsersPage(params: {
         {
           projection: {
             _id: 0,
-            username: 1,
-            userType: 1,
-            createdAt: 1,
-            updatedAt: 1,
+          username: 1,
+          userType: 1,
+          first_name: 1,
+          last_name: 1,
+          email: 1,
+          phoneno: 1,
+          createdAt: 1,
+          updatedAt: 1,
           },
         },
       )
@@ -145,6 +262,10 @@ export async function listMeetUsersPage(params: {
     users: users.map((user) => ({
       username: user.username,
       userType: user.userType,
+      first_name: user.first_name ?? '',
+      last_name: user.last_name ?? '',
+      email: user.email ?? '',
+      phoneno: user.phoneno ?? '',
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     })),
@@ -159,12 +280,20 @@ export async function updateMeetUser(params: {
   username: string;
   userType?: MeetUserType;
   password?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phoneno?: string;
 }) {
   const collection = await getMeetUsersCollection();
   const username = normalizeUsername(params.username);
   const update: {
     userType?: MeetUserType;
     passwordHash?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phoneno?: string;
     updatedAt: Date;
   } = {
     updatedAt: new Date(),
@@ -176,6 +305,22 @@ export async function updateMeetUser(params: {
 
   if (params.password) {
     update.passwordHash = hashPassword(params.password);
+  }
+
+  if (params.first_name !== undefined) {
+    update.first_name = params.first_name.trim();
+  }
+
+  if (params.last_name !== undefined) {
+    update.last_name = params.last_name.trim();
+  }
+
+  if (params.email !== undefined) {
+    update.email = params.email.trim();
+  }
+
+  if (params.phoneno !== undefined) {
+    update.phoneno = params.phoneno.trim();
   }
 
   const result = await collection.findOneAndUpdate(
@@ -191,6 +336,10 @@ export async function updateMeetUser(params: {
   return {
     username: result.username,
     userType: result.userType,
+    first_name: result.first_name ?? '',
+    last_name: result.last_name ?? '',
+    email: result.email ?? '',
+    phoneno: result.phoneno ?? '',
     createdAt: result.createdAt.toISOString(),
     updatedAt: result.updatedAt.toISOString(),
   };

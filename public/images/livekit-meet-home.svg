@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 900 220" fill="none" role="img" aria-labelledby="title desc">
-  <title id="title">MeetingApp Tools</title>
+  <title id="title">MeetApp</title>
   <desc id="desc">Text-only logo inspired by the supplied two-tone wordmark, with the tagline Let's MeetUp.</desc>
 
   <rect width="1200" height="220" fill="transparent"/>
@@ -9,15 +9,9 @@
           font-size="106"
           font-weight="800"
           letter-spacing="-4"
-          fill="#FFFFFF">MeetingApp</text>
+          fill="#FFFFFF">MeetApp</text>
 
-    <text x="720" y="126"
-          font-size="106"
-          font-weight="400"
-          letter-spacing="-3"
-          fill="#FF6352">Tools</text>
-
-    <text x="720" y="186"
+    <text x="45" y="186"
           font-size="34"
           font-weight="600"
           letter-spacing="3"

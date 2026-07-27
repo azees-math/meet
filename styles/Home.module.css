@@ -39,7 +39,7 @@
   border-radius: 0.5rem;
 }
 
-.tabContent input {
+.tabContent input:not([type='checkbox']) {
   min-height: 44px;
   width: 100%;
   padding: 0.75rem 0.875rem;
@@ -55,14 +55,31 @@
     box-shadow 160ms ease;
 }
 
-.tabContent input:focus {
+.tabContent input:not([type='checkbox']):focus {
   border-color: #ff6352;
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 3px rgba(255, 99, 82, 0.18);
 }
 
-.tabContent input::placeholder {
+.tabContent input:not([type='checkbox'])::placeholder {
   color: rgba(255, 255, 255, 0.42);
+}
+
+.inlineCheckboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inlineCheckbox {
+  flex: 0 0 auto;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: #ff6352;
 }
 
 .roomField {
@@ -192,6 +209,72 @@
   min-height: 44px;
 }
 
+.profilePanel {
+  display: flex;
+  width: min(100% - 2rem, 720px);
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  background: #151515;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profileHeader h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.profileHeader p {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profileActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.profileForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.profileField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profileField span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.875rem;
+}
+
+.profileField input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  outline: none;
+}
+
+.profileField input:disabled {
+  opacity: 0.7;
+}
+
 .authDivider {
   display: flex;
   width: min(100%, 320px);
@@ -285,6 +368,18 @@
   align-items: center;
   gap: 0.75rem;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.accountIdentityText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.accountSubtle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8125rem;
 }
 
 .accountActions {
