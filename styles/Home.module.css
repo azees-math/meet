@@ -358,6 +358,23 @@
   background-color: var(--lk-bg);
 }
 
+.accountMenu {
+  position: relative;
+}
+
+.accountTrigger {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+}
+
 .accountNotice {
   padding: 1rem 2rem 0;
 }
@@ -393,10 +410,72 @@
   border-radius: 50%;
 }
 
+.accountTrigger img {
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
 .accountIdentity span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.accountAvatarFallback {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.accountChevron {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.accountDropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 200px;
+  padding: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background: #151515;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+}
+
+.accountDropdownItem,
+.accountDropdownDanger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.86);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.accountDropdownItem:hover,
+.accountDropdownDanger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.accountDropdownDanger {
+  color: #ffb4aa;
 }
 
 .userTypeBadge {
@@ -633,15 +712,10 @@
     padding: 1rem;
   }
 
-  .accountBar button {
-    width: 100%;
-  }
-
-  .accountActions {
-    flex-direction: column;
-  }
-
-  .accountActions > * {
+  .accountTrigger,
+  .accountDropdown,
+  .accountDropdown button,
+  .accountDropdown a {
     width: 100%;
   }
 }

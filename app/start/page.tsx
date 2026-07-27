@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ChevronDown, LogOut, Shield, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { DemoMeetingPanel, useMeetingRooms } from '@/components/meeting-forms';
@@ -21,7 +22,9 @@ export default function StartPage() {
   const [authSession, setAuthSession] = useState<AuthSessionState | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const pendingSessionUserRef = useRef<string | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
   const getSessionUserKey = React.useCallback((user: AuthUser) => {
     return `${user.username}:${user.authMethod}:${user.userType}`;
@@ -268,6 +271,23 @@ export default function StartPage() {
     };
   }, [authSession, endSession, heartbeatSession]);
 
+  useEffect(() => {
+    if (!isAccountMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [isAccountMenuOpen]);
+
   async function signOut() {
     await endSession('manual_logout');
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -289,29 +309,61 @@ export default function StartPage() {
 
   const displayName =
     [authUser.first_name, authUser.last_name].filter(Boolean).join(' ').trim() || authUser.username;
+  const avatarLabel = (authUser.first_name?.[0] ?? authUser.username[0] ?? 'U').toUpperCase();
 
   return (
     <>
       <div className={styles.accountBar} data-lk-theme="default">
-        <div className={styles.accountIdentity}>
-          {authUser.picture ? <img src={authUser.picture} alt="" width="32" height="32" /> : null}
-          <div className={styles.accountIdentityText}>
-            <span>{displayName}</span>
-            <span className={styles.accountSubtle}>{authUser.username}</span>
-          </div>
-        </div>
-        <div className={styles.accountActions}>
-          {authUser.userType === 'admin' ? (
-            <Link href="/admin" className="lk-button">
-              Admin
-            </Link>
-          ) : null}
-          <Link href="/profile" className="lk-button">
-            Profile
-          </Link>
-          <button className="lk-button" onClick={signOut}>
-            Sign out
+        <div className={styles.accountMenu} ref={accountMenuRef}>
+          <button
+            type="button"
+            className={styles.accountTrigger}
+            onClick={() => setIsAccountMenuOpen((current) => !current)}
+          >
+            {authUser.picture ? (
+              <img src={authUser.picture} alt={displayName} width="36" height="36" />
+            ) : (
+              <div className={styles.accountAvatarFallback}>{avatarLabel}</div>
+            )}
+            <div className={styles.accountIdentityText}>
+              <span>{displayName}</span>
+              <span className={styles.accountSubtle}>{authUser.username}</span>
+            </div>
+            <ChevronDown className={styles.accountChevron} size={16} />
           </button>
+          {isAccountMenuOpen ? (
+            <div className={styles.accountDropdown}>
+              <Link
+                href="/profile"
+                className={styles.accountDropdownItem}
+                onClick={() => setIsAccountMenuOpen(false)}
+              >
+                <User size={16} />
+                <span>Profile</span>
+              </Link>
+              {authUser.userType === 'admin' ? (
+                <Link
+                  href="/admin"
+                  className={styles.accountDropdownItem}
+                  onClick={() => setIsAccountMenuOpen(false)}
+                >
+                  <Shield size={16} />
+                  <span>Admin</span>
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                className={styles.accountDropdownDanger}
+                onClick={() => {
+                  setIsAccountMenuOpen(false);
+                  void signOut();
+                }}
+              >
+                <LogOut size={16} />
+                <span>Sign out</span>
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
       {error ? (

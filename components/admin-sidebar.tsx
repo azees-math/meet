@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Activity, ArrowLeft, DoorOpen, Radio, Shield, Users } from "lucide-react"
+import * as React from "react"
+import { Activity, ArrowLeft, ChevronUp, DoorOpen, LogOut, Radio, Shield, User, Users } from "lucide-react"
 
 import { AuthUser } from "@/lib/auth-session"
 import { cn } from "@/lib/utils"
@@ -33,14 +34,38 @@ export function AdminSidebar({
   authUser,
   activeTab,
   onSelectTab,
+  onSignOut,
 }: {
   authUser: AuthUser | null
   activeTab: AdminTab
   onSelectTab: (tab: AdminTab) => void
+  onSignOut: () => void
 }) {
   const { open, isMobile, setOpenMobile } = useSidebar()
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement | null>(null)
 
   const showLabel = open || isMobile
+  const displayName =
+    [authUser?.first_name, authUser?.last_name].filter(Boolean).join(" ") || authUser?.username || "Admin"
+  const avatarLabel = (authUser?.first_name?.[0] ?? authUser?.username?.[0] ?? "A").toUpperCase()
+
+  React.useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    window.addEventListener("mousedown", handlePointerDown)
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown)
+    }
+  }, [menuOpen])
 
   return (
     <Sidebar collapsible="icon">
@@ -85,12 +110,72 @@ export function AdminSidebar({
       </SidebarContent>
       <SidebarFooter>
         <div className="space-y-3">
-          {showLabel ? (
-            <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-              <div className="font-medium text-white">{authUser?.userType}</div>
-              <div className="mt-1 text-zinc-400">Authorized admin session</div>
-            </div>
-          ) : null}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-left transition-colors hover:bg-white/10",
+                !showLabel && "justify-center px-2",
+              )}
+              onClick={() => setMenuOpen((value) => !value)}
+            >
+              {authUser?.picture ? (
+                <img
+                  src={authUser.picture}
+                  alt={displayName}
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-semibold text-zinc-950">
+                  {avatarLabel}
+                </div>
+              )}
+              {showLabel ? (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-white">{displayName}</div>
+                    <div className="truncate text-xs text-zinc-400">
+                      {authUser?.username} • {authUser?.userType}
+                    </div>
+                  </div>
+                  <ChevronUp className={cn("h-4 w-4 text-zinc-400 transition-transform", menuOpen && "rotate-180")} />
+                </>
+              ) : null}
+            </button>
+
+            {menuOpen ? (
+              <div
+                className={cn(
+                  "absolute bottom-full left-0 z-50 mb-2 min-w-[220px] rounded-md border border-white/10 bg-zinc-900 p-1 shadow-2xl",
+                  !showLabel && "left-full ml-2 w-56",
+                )}
+              >
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-zinc-200 transition-colors hover:bg-white/10 hover:text-white"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setOpenMobile(false)
+                  }}
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-red-200 transition-colors hover:bg-red-500/15 hover:text-red-100"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setOpenMobile(false)
+                    onSignOut()
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign out</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
           <Button variant="outline" className={cn("w-full", !showLabel && "px-0")} asChild>
             <Link href="/">
               <ArrowLeft className="h-4 w-4" />

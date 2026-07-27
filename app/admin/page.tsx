@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Download, Filter, KeyRound, Pencil, Power, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin-sidebar";
@@ -189,17 +190,26 @@ export default function AdminPage() {
   const [meetingRoomAccessFilter, setMeetingRoomAccessFilter] = React.useState("");
 
   React.useEffect(() => {
-    const search = typeof window === "undefined" ? "" : window.location.search;
-    const tab = new URLSearchParams(search).get("tab");
-    if (tab === "online" || tab === "logs" || tab === "users" || tab === "rooms") {
-      setActiveTab(tab);
-      return;
-    }
-    setActiveTab("users");
+    const syncTabFromLocation = () => {
+      const tab = new URLSearchParams(window.location.search).get("tab");
+      if (tab === "online" || tab === "logs" || tab === "users" || tab === "rooms") {
+        setActiveTab(tab);
+        return;
+      }
+      setActiveTab("users");
+    };
+
+    syncTabFromLocation();
+    window.addEventListener("popstate", syncTabFromLocation);
+
+    return () => {
+      window.removeEventListener("popstate", syncTabFromLocation);
+    };
   }, []);
 
   const setTab = React.useCallback(
     (tab: AdminTab) => {
+      setActiveTab(tab);
       const nextParams = new URLSearchParams(window.location.search);
       nextParams.set("tab", tab);
       router.replace(`/admin?${nextParams.toString()}`);
@@ -839,6 +849,33 @@ export default function AdminPage() {
     }
   }
 
+  async function handleSignOut() {
+    try {
+      const storedSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+      if (storedSession) {
+        try {
+          const session = JSON.parse(storedSession) as AuthSessionState;
+          await fetch("/api/auth/session/end", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sessionId: session.sessionId, reason: "manual_logout" }),
+            keepalive: true,
+          });
+        } catch {
+          window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+        }
+      }
+    } finally {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      setAuthUser(null);
+      setAuthSession(null);
+      router.replace("/login");
+    }
+  }
+
   if (!isReady) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-50">
@@ -849,7 +886,14 @@ export default function AdminPage() {
 
   return (
     <SidebarProvider defaultOpen>
-      <AdminSidebar authUser={authUser} activeTab={activeTab} onSelectTab={setTab} />
+      <AdminSidebar
+        authUser={authUser}
+        activeTab={activeTab}
+        onSelectTab={setTab}
+        onSignOut={() => {
+          void handleSignOut();
+        }}
+      />
       <SidebarInset>
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-white/10 bg-zinc-950/90 px-4 backdrop-blur">
           <div className="flex items-center gap-3">
@@ -992,29 +1036,38 @@ export default function AdminPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            title="Edit profile"
+                            aria-label="Edit profile"
                             onClick={() => {
                               setSelectedUserProfile(user);
                               setIsUserProfileModalOpen(true);
                             }}
                           >
-                            Edit Profile
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Edit profile</span>
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            title="Reset password"
+                            aria-label="Reset password"
                             onClick={() => void handleResetPassword(user.username)}
                           >
-                            Reset Password
+                            <KeyRound className="h-4 w-4" />
+                            <span className="sr-only">Reset password</span>
                           </Button>
                           <Button
                             type="button"
                             variant="destructive"
-                            size="sm"
+                            size="icon"
+                            title="Delete user"
+                            aria-label="Delete user"
                             onClick={() => void handleDeleteUser(user.username)}
                           >
-                            Delete
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete user</span>
                           </Button>
                         </div>
                       </div>
@@ -1121,18 +1174,24 @@ export default function AdminPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            title="Reset password"
+                            aria-label="Reset password"
                             onClick={() => void handleResetMeetingRoomPassword(room.roomName)}
                           >
-                            Reset Password
+                            <KeyRound className="h-4 w-4" />
+                            <span className="sr-only">Reset password</span>
                           </Button>
                           <Button
                             type="button"
                             variant="destructive"
-                            size="sm"
+                            size="icon"
+                            title="Delete meeting room"
+                            aria-label="Delete meeting room"
                             onClick={() => void handleDeleteMeetingRoom(room.roomName)}
                           >
-                            Delete
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete meeting room</span>
                           </Button>
                         </div>
                       </div>
@@ -1180,15 +1239,19 @@ export default function AdminPage() {
                       className="h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-zinc-500"
                     />
                     <Button type="submit" variant="outline" size="sm">
-                      Filter
+                      <Filter className="h-4 w-4" />
+                      <span className="sr-only">Filter</span>
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      title="Export CSV"
+                      aria-label="Export CSV"
                       onClick={() => void handleExportMeetingRoomAccessCsv()}
                     >
-                      Export CSV
+                      <Download className="h-4 w-4" />
+                      <span className="sr-only">Export CSV</span>
                     </Button>
                   </form>
                 </div>
@@ -1281,11 +1344,14 @@ export default function AdminPage() {
                         <Button
                           type="button"
                           variant="destructive"
-                          size="sm"
+                          size="icon"
+                          title="End session"
+                          aria-label="End session"
                           disabled={authSession?.sessionId === user.sessionId}
                           onClick={() => void handleEndOnlineSession(user.sessionId)}
                         >
-                          End Session
+                          <Power className="h-4 w-4" />
+                          <span className="sr-only">End session</span>
                         </Button>
                       </div>
                     ))}
@@ -1315,10 +1381,13 @@ export default function AdminPage() {
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
+                  size="icon"
+                  title="Clear logs"
+                  aria-label="Clear logs"
                   onClick={() => void handleClearActivityLogs()}
                 >
-                  Clear Logs
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Clear logs</span>
                 </Button>
               </div>
               {isLoadingLogs ? (
@@ -1353,10 +1422,13 @@ export default function AdminPage() {
                         <Button
                           type="button"
                           variant="destructive"
-                          size="sm"
+                          size="icon"
+                          title="Delete activity log"
+                          aria-label="Delete activity log"
                           onClick={() => void handleDeleteActivityLog(log.id)}
                         >
-                          Delete
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete activity log</span>
                         </Button>
                       </div>
                     ))}
