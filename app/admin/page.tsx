@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Button } from "@/components/ui/button";
@@ -153,7 +153,6 @@ function PaginationControls(props: {
 
 export default function AdminPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [authUser, setAuthUser] = React.useState<AuthUser | null>(null);
   const [authSession, setAuthSession] = React.useState<AuthSessionState | null>(null);
   const [users, setUsers] = React.useState<AdminUser[]>([]);
@@ -190,21 +189,22 @@ export default function AdminPage() {
   const [meetingRoomAccessFilter, setMeetingRoomAccessFilter] = React.useState("");
 
   React.useEffect(() => {
-    const tab = searchParams.get("tab");
+    const search = typeof window === "undefined" ? "" : window.location.search;
+    const tab = new URLSearchParams(search).get("tab");
     if (tab === "online" || tab === "logs" || tab === "users" || tab === "rooms") {
       setActiveTab(tab);
       return;
     }
     setActiveTab("users");
-  }, [searchParams]);
+  }, []);
 
   const setTab = React.useCallback(
     (tab: AdminTab) => {
-      const nextParams = new URLSearchParams(searchParams.toString());
+      const nextParams = new URLSearchParams(window.location.search);
       nextParams.set("tab", tab);
       router.replace(`/admin?${nextParams.toString()}`);
     },
-    [router, searchParams],
+    [router],
   );
 
   const loadUsers = React.useCallback(async (sessionId: string, page = 1) => {
